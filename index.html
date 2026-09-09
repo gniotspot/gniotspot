@@ -214,6 +214,7 @@
     100%{ background-position: -200% 0; }
   }
 
+  /* Galeria zdjęć w karcie produktu */
   .gallery-dot{
     width: 6px; height: 6px;
     border-radius: 999px;
@@ -225,6 +226,7 @@
     width: 16px;
   }
 
+  /* Picker miniaturek z repo w adminie */
   .img-pick{
     border: 2px solid var(--card-border);
     cursor: pointer;
@@ -238,7 +240,7 @@
 
 <body class="min-h-screen">
 
-<!-- ============ BANER GÓRNY ============ -->
+<!-- ============ BANER GÓRNY: rabaty / status wysyłki ============ -->
 <div id="topBanner" class="w-full bg-[var(--acid)] text-[#0a0f0a] text-sm font-semibold py-2 px-4 text-center hidden">
   <span id="topBannerText"></span>
 </div>
@@ -322,6 +324,7 @@
 <!-- ============ STOPKA ============ -->
 <footer class="border-t border-[var(--card-border)] bg-[var(--bg-soft)]">
   <div class="max-w-5xl mx-auto px-5 py-12">
+
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10">
       <div>
         <div class="font-display font-bold text-xl mb-3">Gniot<span class="text-[var(--acid)]">Spot</span></div>
@@ -357,6 +360,9 @@
     <div class="pt-6 border-t border-[var(--card-border)] text-xs text-[var(--paper-dim)] leading-relaxed space-y-2">
       <p>
         Sprzedaż prowadzona jako działalność niezarejestrowana (nierejestrowana) w rozumieniu art. 5 ustawy Prawo przedsiębiorców — sprzedaż okazjonalna, niezarobkowa w rozumieniu działalności gospodarczej. Wszystkie transakcje realizowane są bezpośrednio przez platformę Vinted i podlegają jej regulaminowi.
+      </p>
+      <p>
+        Zdjęcia produktów mogą nieznacznie różnić się od rzeczywistego wyglądu (kolor ekranu, oświetlenie). W razie pytań — pisz śmiało przez Vinted lub TikTok.
       </p>
     </div>
 
@@ -415,17 +421,19 @@
       <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🔗</span> Linki i logo</h3>
       <form id="linksForm" class="space-y-3">
         <div>
-          <label for="linkVinted" class="text-xs text-[var(--paper-dim)] block mb-1">Link do profilu Vinted</label>
+          <label for="linkVinted" class="text-xs text-[var(--paper-dim)] block mb-1">Link do profilu Vinted (puste = brak przycisku)</label>
           <input id="linkVinted" type="url" placeholder="https://www.vinted.pl/member/..." class="w-full rounded-lg px-3 py-2 text-sm focus-ring">
         </div>
         <div>
-          <label for="linkTiktok" class="text-xs text-[var(--paper-dim)] block mb-1">Link do TikToka</label>
+          <label for="linkTiktok" class="text-xs text-[var(--paper-dim)] block mb-1">Link do TikToka (puste = brak przycisku)</label>
           <input id="linkTiktok" type="url" placeholder="https://www.tiktok.com/@..." class="w-full rounded-lg px-3 py-2 text-sm focus-ring">
         </div>
         <div>
-          <label class="text-xs text-[var(--paper-dim)] block mb-1">Logo — wybierz z biblioteki poniżej lub wpisz</label>
-          <input id="linkLogo" type="text" placeholder="np. IMG001.jpg" class="w-full rounded-lg px-3 py-2 text-sm focus-ring mb-2">
-          <div id="logoGallery" class="grid grid-cols-6 sm:grid-cols-8 gap-2"></div>
+          <label class="text-xs text-[var(--paper-dim)] block mb-1">Logo — plik z repo (wgraj do folderu <code class="text-[var(--acid)]">img/</code> na GitHubie, potem wybierz)</label>
+          <div id="logoPickerRow" class="flex items-center gap-3">
+            <input id="linkLogo" type="text" placeholder="np. IMG001.jpg" class="flex-1 rounded-lg px-3 py-2 text-sm focus-ring">
+          </div>
+          <div id="logoGallery" class="flex flex-wrap gap-2 mt-2"></div>
         </div>
         <button type="submit" class="btn-acid rounded-lg px-4 py-2 text-sm focus-ring">Zapisz linki i logo</button>
       </form>
@@ -434,19 +442,25 @@
     <!-- Galeria zdjęć w repo -->
     <section class="tag-card rounded-2xl p-5 mb-6">
       <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🖼️</span> Galeria zdjęć (z repo)</h3>
+      <p class="text-xs text-[var(--paper-dim)] mb-3 leading-relaxed">
+        Jak to działa: wgraj zdjęcie do folderu <code class="text-[var(--acid)]">img/</code> w repozytorium na GitHubie (przez stronę github.com → Add file → nazwij np. <code class="text-[var(--acid)]">IMG004.jpg</code>). Potem kliknij "Odśwież listę" — jeśli plik faktycznie tam jest, pojawi się tu jako miniatura i będziesz mogła go wybrać przy produkcie albo jako logo. Panel admina sam NIE wgrywa plików na GitHub — to trzeba zrobić ręcznie na stronie repo (przeglądarka nie ma do tego dostępu).
+      </p>
       <div class="flex items-center gap-2 mb-3">
         <input id="newImgName" type="text" placeholder="np. IMG004.jpg" class="flex-1 rounded-lg px-3 py-2 text-sm focus-ring">
-        <button id="addImgNameBtn" type="button" class="btn-ghost rounded-lg px-4 py-2 text-sm focus-ring">+ Dodaj nazwę do listy</button>
+        <button id="addImgNameBtn" class="btn-ghost rounded-lg px-4 py-2 text-sm focus-ring">+ Dodaj nazwę do listy</button>
       </div>
       <div id="imgLibraryGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+      <p class="text-xs text-[var(--paper-dim)] mt-2">Aktualnie w repo: <code class="text-[var(--acid)]">img/IMG001.jpg</code> (logo), <code class="text-[var(--acid)]">img/IMG002.jpg</code> (clicker), <code class="text-[var(--acid)]">img/IMG003.jpg</code> (masło).</p>
     </section>
 
     <!-- Kody rabatowe -->
     <section class="tag-card rounded-2xl p-5 mb-6">
       <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🏷️</span> Kody rabatowe</h3>
       <form id="promoForm" class="flex flex-wrap gap-2 mb-4">
-        <input id="promoCode" type="text" placeholder="np. SZKOŁA1" required class="flex-1 min-w-[120px] rounded-lg px-3 py-2 text-sm focus-ring">
-        <input id="promoValue" type="number" step="0.01" placeholder="rabat np. 2" required class="w-28 rounded-lg px-3 py-2 text-sm focus-ring">
+        <input id="promoCode" type="text" placeholder="np. SZKOŁA1" required
+               class="flex-1 min-w-[120px] rounded-lg px-3 py-2 text-sm focus-ring">
+        <input id="promoValue" type="number" step="0.01" placeholder="rabat np. 2" required
+               class="w-28 rounded-lg px-3 py-2 text-sm focus-ring">
         <button type="submit" class="btn-acid rounded-lg px-4 py-2 text-sm focus-ring">Dodaj</button>
       </form>
       <div id="promoList" class="space-y-2 text-sm"></div>
@@ -462,8 +476,10 @@
     <section class="tag-card rounded-2xl p-5 mb-6">
       <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">💬</span> Opinie klientów</h3>
       <form id="reviewForm" class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
-        <input id="reviewAuthor" type="text" placeholder="Imię / nick" required class="rounded-lg px-3 py-2 text-sm focus-ring">
-        <input id="reviewText" type="text" placeholder="Treść opinii" required class="rounded-lg px-3 py-2 text-sm focus-ring sm:col-span-2">
+        <input id="reviewAuthor" type="text" placeholder="Imię / nick" required
+               class="rounded-lg px-3 py-2 text-sm focus-ring sm:col-span-1">
+        <input id="reviewText" type="text" placeholder="Treść opinii" required
+               class="rounded-lg px-3 py-2 text-sm focus-ring sm:col-span-2">
         <button type="submit" class="btn-acid rounded-lg px-4 py-2 text-sm focus-ring sm:col-span-3">Dodaj opinię</button>
       </form>
       <div id="reviewAdminList" class="space-y-2 text-sm"></div>
@@ -472,12 +488,16 @@
     <!-- Produkty -->
     <section class="tag-card rounded-2xl p-5 mb-6">
       <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🧸</span> Produkty</h3>
+      <p class="text-xs text-[var(--paper-dim)] mb-4">
+        Wybierz do 3 zdjęć z galerii repo (sekcja wyżej) klikając miniaturki poniżej — pierwsze wybrane będzie zdjęciem głównym.
+      </p>
+
       <form id="productForm" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-        <input id="pName" type="text" placeholder="Nazwa produktu (np. Clicker fioletowy, Masło)" required class="rounded-lg px-3 py-2 text-sm focus-ring">
+        <input id="pName" type="text" placeholder="Nazwa produktu" required class="rounded-lg px-3 py-2 text-sm focus-ring">
         <input id="pPrice" type="number" step="0.01" placeholder="Cena (zł)" required class="rounded-lg px-3 py-2 text-sm focus-ring">
 
         <div class="sm:col-span-2">
-          <p class="text-xs text-[var(--paper-dim)] mb-1">Zdjęcia produktu (max 3, automatycznie dobieram lub kliknij by zmienić)</p>
+          <p class="text-xs text-[var(--paper-dim)] mb-1">Zdjęcia produktu (max 3, kliknij by wybrać/odznaczyć)</p>
           <div id="productImgPicker" class="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-1"></div>
           <p id="productImgSelectedText" class="text-xs text-[var(--acid)]"></p>
         </div>
@@ -498,7 +518,21 @@
 </div>
 
 <script>
-const DEFAULT_IMG_LIBRARY = ["logo.jpg", "IMG001.jpg", "IMG002.jpg", "IMG003.jpg", "IMG004.jpg", "IMG005.jpg", "IMG006.jpg"];
+// ======================================================================
+//  BIBLIOTEKA NAZW PLIKÓW W img/ — trzymana lokalnie w przeglądarce
+//  (localStorage), bo strona statyczna nie ma dostępu do listowania
+//  zawartości repo GitHub. Kiedy wgrywasz nowy plik do img/ na GitHubie,
+//  dopisz jego nazwę tutaj przyciskiem "+ Dodaj nazwę do listy".
+// ======================================================================
+const DEFAULT_IMG_LIBRARY = [
+  "logo.jpg",
+  "IMG001.jpg",
+  "IMG002.jpg",
+  "IMG003.jpg",
+  "IMG004.jpg",
+  "IMG005.jpg",
+  "IMG006.jpg"
+];
 
 function loadImgLibrary(){
   try {
@@ -511,16 +545,10 @@ function saveImgLibrary(list){
   try { localStorage.setItem("gniotspot_img_library", JSON.stringify(list)); } catch(e){}
 }
 let imgLibrary = loadImgLibrary();
-let selectedProductImages = [];
 
-function imgUrl(name){
-  return "./img/" + name;
-}
-
-function escapeHtml(str){
-  const div = document.createElement("div");
-  div.textContent = str ?? "";
-  return div.innerHTML;
+function whenFirebaseReady(cb){
+  if (window.__fb) return cb();
+  window.addEventListener("fb-ready", () => cb(), { once: true });
 }
 
 whenFirebaseReady(() => {
@@ -531,35 +559,48 @@ whenFirebaseReady(() => {
     onSnapshot, updateDoc, increment, query, orderBy, serverTimestamp
   } = window.__fb;
 
-  const productsCol = collection(db, "sklep", "dane", "produkty");
-  const promosCol = collection(db, "sklep", "dane", "promocje");
-  const reviewsCol = collection(db, "sklep", "dane", "opinie");
-  const settingsDoc = doc(db, "sklep", "ustawienia");
+  const productsCol    = collection(db, "sklep", "dane", "produkty");
+  const promosCol      = collection(db, "sklep", "dane", "promocje");
+  const reviewsCol     = collection(db, "sklep", "dane", "opinie");
+  const settingsDoc    = doc(db, "sklep", "ustawienia");
 
   let products = [];
   let promos = [];
   let reviews = [];
   let shippingActive = true;
   let isAdmin = false;
+  let selectedProductImages = []; // do formularza dodawania produktu, max 3
 
-  const productGrid = document.getElementById("productGrid");
-  const emptyState = document.getElementById("emptyState");
-  const reviewsGrid = document.getElementById("reviewsGrid");
-  const reviewsEmpty = document.getElementById("reviewsEmpty");
-  const topBanner = document.getElementById("topBanner");
+  const productGrid    = document.getElementById("productGrid");
+  const emptyState     = document.getElementById("emptyState");
+  const reviewsGrid    = document.getElementById("reviewsGrid");
+  const reviewsEmpty   = document.getElementById("reviewsEmpty");
+  const topBanner      = document.getElementById("topBanner");
   const topBannerText = document.getElementById("topBannerText");
-  const shippingDot = document.getElementById("shippingDot");
+  const shippingDot    = document.getElementById("shippingDot");
   const shippingStatusText = document.getElementById("shippingStatusText");
   const countdownText = document.getElementById("countdownText");
-  const viewerCount = document.getElementById("viewerCount");
-  const tiktokLink = document.getElementById("tiktokLink");
-  const vintedLink = document.getElementById("vintedLink");
-  const logoImg = document.getElementById("logoImg");
-  const startDate = document.getElementById("startDate");
+  const viewerCount    = document.getElementById("viewerCount");
+  const tiktokLink     = document.getElementById("tiktokLink");
+  const vintedLink     = document.getElementById("vintedLink");
+  const logoImg        = document.getElementById("logoImg");
+  const startDate      = document.getElementById("startDate");
 
-  // --- RENDERING FRONTEND ---
+  function escapeHtml(str){
+    const div = document.createElement("div");
+    div.textContent = str ?? "";
+    return div.innerHTML;
+  }
+
+  function imgUrl(name){
+    return "./img/" + name;
+  }
+
+  // ======================================================================
+  //  RENDER: PRODUKTY (frontend) — z galerią max 3 zdjęć na kartę
+  // ======================================================================
   function renderProducts(){
-    if (!products.length){
+    if (products.length === 0){
       productGrid.innerHTML = "";
       emptyState.classList.remove("hidden");
       return;
@@ -568,15 +609,19 @@ whenFirebaseReady(() => {
 
     productGrid.innerHTML = products.map(p => {
       const inStock = p.inStock !== false;
-      const images = (Array.isArray(p.images) && p.images.length > 0) ? p.images : (p.image ? [p.image] : []);
+      const images = (Array.isArray(p.images) && p.images.length > 0)
+        ? p.images
+        : (p.image ? [p.image] : []);
       const finalImages = images.length > 0 ? images : ["__placeholder__"];
 
       const slidesHtml = finalImages.map((img, i) => {
-        const src = img === "__placeholder__" ? "https://placehold.co/500x400/141d12/c8ff3d?text=GniotSpot" : imgUrl(img);
+        const src = img === "__placeholder__"
+          ? "https://placehold.co/500x400/141d12/c8ff3d?text=GniotSpot"
+          : imgUrl(img);
         return `<img src="${escapeHtml(src)}" alt="${escapeHtml(p.name)}" loading="lazy"
-                     data-slide="${i}"
-                     class="product-slide w-full h-full object-cover absolute inset-0 transition-opacity duration-200 ${i === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}"
-                     onerror="this.src='https://placehold.co/500x400/141d12/c8ff3d?text=GniotSpot'">`;
+                 data-slide="${i}"
+                 class="product-slide w-full h-full object-cover absolute inset-0 transition-opacity duration-200 ${i === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}"
+                 onerror="this.src='https://placehold.co/500x400/141d12/c8ff3d?text=GniotSpot'">`;
       }).join("");
 
       const dotsHtml = finalImages.length > 1
@@ -600,14 +645,16 @@ whenFirebaseReady(() => {
           ${inStock
             ? (p.vintedUrl
                 ? `<button data-id="${p.id}" data-url="${escapeHtml(p.vintedUrl)}"
-                        class="buy-btn btn-vinted rounded-lg py-3 text-sm focus-ring">Kup na Vinted</button>`
-                : `<button disabled class="btn-vinted rounded-lg py-3 text-sm opacity-50 cursor-not-allowed">Kup na Vinted (wkrótce)</button>`)
+                       class="buy-btn btn-vinted rounded-lg py-3 text-sm focus-ring">Kup na Vinted</button>`
+                : `<button disabled title="Link do oferty jeszcze nie ustawiony"
+                       class="btn-vinted rounded-lg py-3 text-sm" disabled>Kup na Vinted (wkrótce)</button>`)
             : `<button disabled class="btn-sold rounded-lg py-3 text-sm cursor-not-allowed">Wyprzedane / Brak stocku</button>`
           }
         </div>
       `;
     }).join("");
 
+    // klik w galerię = przełącz na następne zdjęcie
     document.querySelectorAll(".product-gallery").forEach(gal => {
       const count = parseInt(gal.dataset.count, 10);
       if (count <= 1) return;
@@ -635,9 +682,13 @@ whenFirebaseReady(() => {
       });
     });
   }
+});
 
+  // ======================================================================
+  //  RENDER: OPINIE
+  // ======================================================================
   function renderReviews(){
-    if (!reviews.length){
+    if (reviews.length === 0){
       reviewsGrid.innerHTML = "";
       reviewsEmpty.classList.remove("hidden");
       return;
@@ -674,7 +725,7 @@ whenFirebaseReady(() => {
   function updateCountdown(){
     const now = new Date();
     const start = new Date(now); start.setHours(15,0,0,0);
-    const end = new Date(now); end.setHours(20,0,0,0);
+    const end   = new Date(now); end.setHours(20,0,0,0);
 
     if (!shippingActive){
       countdownText.textContent = "dzisiaj wysyłka wstrzymana";
@@ -697,7 +748,17 @@ whenFirebaseReady(() => {
   }
   setInterval(updateCountdown, 30000);
 
-  // --- FIREBASE LISTENERS ---
+  function tickViewerCount(){
+    const base = 3 + Math.floor(Math.sin(Date.now() / 90000) * 2 + 2);
+    const jitter = Math.floor(Math.random() * 2);
+    viewerCount.textContent = Math.max(1, base + jitter);
+  }
+  tickViewerCount();
+  setInterval(tickViewerCount, 12000);
+
+  // ======================================================================
+  //  FIRESTORE: NASŁUCHIWANIE NA ŻYWO
+  // ======================================================================
   onSnapshot(productsCol, snap => {
     products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderProducts();
@@ -724,38 +785,29 @@ whenFirebaseReady(() => {
       if (data.tiktokUrl){
         tiktokLink.href = data.tiktokUrl;
         document.getElementById("linkTiktok").value = data.tiktokUrl;
-        tiktokLink.parentElement.style.display = "flex";
-      } else {
-        tiktokLink.parentElement.style.display = "none";
       }
       if (data.vintedProfileUrl){
         vintedLink.href = data.vintedProfileUrl;
         document.getElementById("linkVinted").value = data.vintedProfileUrl;
-        vintedLink.style.display = "block";
-      } else {
-        vintedLink.style.display = "none";
       }
       if (data.logoImage){
         logoImg.src = imgUrl(data.logoImage);
         logoImg.classList.remove("hidden");
         document.getElementById("linkLogo").value = data.logoImage;
-      } else {
-        logoImg.classList.add("hidden");
       }
       if (data.startDate) startDate.textContent = data.startDate;
     }
     renderShippingStatus();
     updateCountdown();
-    const toggle = document.getElementById("shippingToggle");
-    if (toggle) {
-      toggle.checked = shippingActive;
-      document.getElementById("shippingToggleLabel").textContent = shippingActive
-        ? "Włączona — klienci widzą, że wysyłam dziś"
-        : "Wyłączona — klienci widzą komunikat o braku wysyłki";
-    }
+    document.getElementById("shippingToggle").checked = shippingActive;
+    document.getElementById("shippingToggleLabel").textContent = shippingActive
+      ? "Włączona — klienci widzą, że wysyłam dziś"
+      : "Wyłączona — klienci widzą komunikat o braku wysyłki";
   }, err => console.error("Błąd ustawień:", err));
 
-  // --- LOGOWANIE / WYLOGOWANIE ---
+  // ======================================================================
+  //  LOGOWANIE / WYLOGOWANIE
+  // ======================================================================
   const loginModal   = document.getElementById("loginModal");
   const adminModal   = document.getElementById("adminModal");
   const adminOpenBtn = document.getElementById("adminOpenBtn");
@@ -804,7 +856,9 @@ whenFirebaseReady(() => {
     }
   });
 
-  // --- ADMIN: STATUS WYSYŁKI ---
+  // ======================================================================
+  //  ADMIN: STATUS WYSYŁKI
+  // ======================================================================
   document.getElementById("shippingToggle").addEventListener("change", (e) => {
     setDoc(settingsDoc, { shippingActive: e.target.checked }, { merge: true }).catch(err => {
       alert("Nie udało się zapisać — zaloguj się ponownie.");
@@ -812,7 +866,9 @@ whenFirebaseReady(() => {
     });
   });
 
-  // --- ADMIN: LINKI (Vinted / TikTok) + LOGO ---
+  // ======================================================================
+  //  ADMIN: LINKI (Vinted / TikTok) + LOGO
+  // ======================================================================
   document.getElementById("linksForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const vintedProfileUrl = document.getElementById("linkVinted").value.trim();
@@ -824,118 +880,89 @@ whenFirebaseReady(() => {
     } catch (err){ console.error(err); alert("Błąd zapisu linków."); }
   });
 
-  // --- BIBLIOTEKA ZDJĘĆ Z REPO ---
-  window.renderImgLibrary = function() {
+  // ======================================================================
+  //  BIBLIOTEKA ZDJĘĆ Z REPO (nazwy plików trzymane lokalnie)
+  // ======================================================================
+  function renderImgLibrary(){
     const grid = document.getElementById("imgLibraryGrid");
     const logoGallery = document.getElementById("logoGallery");
     const productPicker = document.getElementById("productImgPicker");
 
-    const thumb = (name, extraClass = "") => `
+    const thumb = (name, onClick, extraClass = "") => `
       <div class="img-pick rounded-lg aspect-square ${extraClass}" data-name="${escapeHtml(name)}" title="${escapeHtml(name)}">
         <img src="${imgUrl(name)}" alt="${escapeHtml(name)}" loading="lazy" class="w-full h-full object-cover"
              onerror="this.parentElement.classList.add('opacity-40')">
       </div>`;
 
-    if (grid) {
-      grid.innerHTML = imgLibrary.map(name => `
-        <div class="relative">
-          ${thumb(name)}
-          <button data-remove="${escapeHtml(name)}" class="remove-img-name absolute -top-1 -right-1 bg-[var(--warn)] text-white text-[10px] w-4 h-4 rounded-full leading-none">✕</button>
-        </div>
-      `).join("") || `<p class="text-xs text-[var(--paper-dim)] col-span-full">Lista pusta — dodaj nazwę pliku powyżej.</p>`;
+    grid.innerHTML = imgLibrary.map(name => `
+      <div class="relative">
+        ${thumb(name)}
+        <button data-remove="${escapeHtml(name)}" class="remove-img-name absolute -top-1 -right-1 bg-[var(--warn)] text-white text-[10px] w-4 h-4 rounded-full leading-none">✕</button>
+      </div>
+    `).join("") || `<p class="text-xs text-[var(--paper-dim)] col-span-full">Lista pusta — dodaj nazwę pliku powyżej.</p>`;
 
-      grid.querySelectorAll(".remove-img-name").forEach(btn => {
-        btn.addEventListener("click", () => {
-          imgLibrary = imgLibrary.filter(n => n !== btn.dataset.remove);
-          saveImgLibrary(imgLibrary);
-          renderImgLibrary();
-        });
+    grid.querySelectorAll(".remove-img-name").forEach(btn => {
+      btn.addEventListener("click", () => {
+        imgLibrary = imgLibrary.filter(n => n !== btn.dataset.remove);
+        saveImgLibrary(imgLibrary);
+        renderImgLibrary();
       });
-    }
+    });
 
-    if (logoGallery) {
-      logoGallery.innerHTML = imgLibrary.map(name => thumb(name,
-        document.getElementById("linkLogo").value === name ? "selected" : "")).join("");
-      logoGallery.querySelectorAll(".img-pick").forEach(el => {
-        el.addEventListener("click", () => {
-          document.getElementById("linkLogo").value = el.dataset.name;
-          logoGallery.querySelectorAll(".img-pick").forEach(x => x.classList.remove("selected"));
-          el.classList.add("selected");
-        });
+    // Logo picker
+    logoGallery.innerHTML = imgLibrary.map(name => thumb(name, null,
+      document.getElementById("linkLogo").value === name ? "selected" : "")).join("");
+    logoGallery.querySelectorAll(".img-pick").forEach(el => {
+      el.addEventListener("click", () => {
+        document.getElementById("linkLogo").value = el.dataset.name;
+        logoGallery.querySelectorAll(".img-pick").forEach(x => x.classList.remove("selected"));
+        el.classList.add("selected");
       });
-    }
+    });
 
-    if (productPicker) {
-      productPicker.innerHTML = imgLibrary.map(name => thumb(name,
-        selectedProductImages.includes(name) ? "selected" : "")).join("");
-      productPicker.querySelectorAll(".img-pick").forEach(el => {
-        el.addEventListener("click", () => {
-          const name = el.dataset.name;
-          if (selectedProductImages.includes(name)){
-            selectedProductImages = selectedProductImages.filter(n => n !== name);
-          } else {
-            if (selectedProductImages.length >= 3){
-              alert("Można wybrać maksymalnie 3 zdjęcia.");
-              return;
-            }
-            selectedProductImages.push(name);
+    // Product image picker (max 3)
+    productPicker.innerHTML = imgLibrary.map(name => thumb(name, null,
+      selectedProductImages.includes(name) ? "selected" : "")).join("");
+    productPicker.querySelectorAll(".img-pick").forEach(el => {
+      el.addEventListener("click", () => {
+        const name = el.dataset.name;
+        if (selectedProductImages.includes(name)){
+          selectedProductImages = selectedProductImages.filter(n => n !== name);
+        } else {
+          if (selectedProductImages.length >= 3){
+            alert("Można wybrać maksymalnie 3 zdjęcia.");
+            return;
           }
-          renderImgLibrary();
-          updateSelectedImagesText();
-        });
+          selectedProductImages.push(name);
+        }
+        renderImgLibrary();
+        updateSelectedImagesText();
       });
-    }
+    });
   }
 
   function updateSelectedImagesText(){
     const el = document.getElementById("productImgSelectedText");
-    if (el) {
-      el.textContent = selectedProductImages.length > 0
-        ? `Wybrane (${selectedProductImages.length}/3): ${selectedProductImages.join(", ")}`
-        : "Nie wybrano jeszcze żadnego zdjęcia.";
+    el.textContent = selectedProductImages.length > 0
+      ? `Wybrane (${selectedProductImages.length}/3): ${selectedProductImages.join(", ")}`
+      : "Nie wybrano jeszcze żadnego zdjęcia.";
+  }
+
+  document.getElementById("addImgNameBtn").addEventListener("click", () => {
+    const input = document.getElementById("newImgName");
+    const name = input.value.trim();
+    if (!name) return;
+    if (!imgLibrary.includes(name)){
+      imgLibrary.push(name);
+      saveImgLibrary(imgLibrary);
+      renderImgLibrary();
     }
-  }
+    input.value = "";
+  });
 
-  const addImgBtn = document.getElementById("addImgNameBtn");
-  if (addImgBtn) {
-    addImgBtn.addEventListener("click", () => {
-      const input = document.getElementById("newImgName");
-      const name = input.value.trim();
-      if (!name) return;
-      if (!imgLibrary.includes(name)){
-        imgLibrary.push(name);
-        saveImgLibrary(imgLibrary);
-        renderImgLibrary();
-      }
-      input.value = "";
-    });
-  }
-
-  // Automatyczne wykrywanie zdjęć dla clickera, masła / butter itp.
-  const nameInput = document.getElementById("pName");
-  if (nameInput) {
-    nameInput.addEventListener("input", (e) => {
-      const val = e.target.value.toLowerCase();
-      // Jeśli użytkownik nic ręcznie nie wybrał, spróbujmy dopasować zdjęcie po nazwie
-      if (selectedProductImages.length === 0) {
-        let keyword = "";
-        if (val.includes("clicker")) keyword = "clicker";
-        else if (val.includes("masło") || val.includes("maslo") || val.includes("butter")) keyword = "butter";
-        else if (val.includes("gniotek") || val.includes("masa")) keyword = "gniot";
-
-        if (keyword) {
-          const found = imgLibrary.find(img => img.toLowerCase().includes(keyword));
-          if (found) {
-            selectedProductImages = [found];
-            renderImgLibrary();
-            updateSelectedImagesText();
-          }
-        }
-      }
-    });
-  }
-
-  // --- ADMIN: KODY RABATOWE ---
+  // ======================================================================
+  //  ADMIN: KODY RABATOWE
+  // ======================================================================
   document.getElementById("promoForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const code = document.getElementById("promoCode").value.trim().toUpperCase();
@@ -949,7 +976,7 @@ whenFirebaseReady(() => {
 
   function renderPromoList(){
     const list = document.getElementById("promoList");
-    if (!promos.length){
+    if (promos.length === 0){
       list.innerHTML = `<p class="text-[var(--paper-dim)] text-xs">Brak aktywnych kodów.</p>`;
       return;
     }
@@ -964,10 +991,12 @@ whenFirebaseReady(() => {
     });
   }
 
-  // --- ADMIN: STATYSTYKI KLIKNIĘĆ ---
+  // ======================================================================
+  //  ADMIN: STATYSTYKI KLIKNIĘĆ
+  // ======================================================================
   function renderStats(){
     const list = document.getElementById("statsList");
-    if (!products.length){
+    if (products.length === 0){
       list.innerHTML = `<p class="text-[var(--paper-dim)] text-xs">Brak produktów.</p>`;
       return;
     }
@@ -979,7 +1008,9 @@ whenFirebaseReady(() => {
     `).join("");
   }
 
-  // --- ADMIN: OPINIE ---
+  // ======================================================================
+  //  ADMIN: OPINIE
+  // ======================================================================
   document.getElementById("reviewForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const author = document.getElementById("reviewAuthor").value.trim();
@@ -993,7 +1024,7 @@ whenFirebaseReady(() => {
 
   function renderReviewAdminList(){
     const list = document.getElementById("reviewAdminList");
-    if (!reviews.length){
+    if (reviews.length === 0){
       list.innerHTML = `<p class="text-[var(--paper-dim)] text-xs">Brak opinii.</p>`;
       return;
     }
@@ -1008,7 +1039,9 @@ whenFirebaseReady(() => {
     });
   }
 
-  // --- ADMIN: PRODUKTY ---
+  // ======================================================================
+  //  ADMIN: PRODUKTY (dodawanie / stock on-off / usuwanie)
+  // ======================================================================
   document.getElementById("productForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = document.getElementById("pName").value.trim();
@@ -1033,7 +1066,7 @@ whenFirebaseReady(() => {
 
   function renderProductAdminList(){
     const list = document.getElementById("productAdminList");
-    if (!products.length){
+    if (products.length === 0){
       list.innerHTML = `<p class="text-[var(--paper-dim)] text-xs">Jeszcze nie dodałaś żadnego produktu.</p>`;
       return;
     }
@@ -1078,7 +1111,6 @@ whenFirebaseReady(() => {
   updateSelectedImagesText();
   renderShippingStatus();
   updateCountdown();
-  renderImgLibrary();
 });
 </script>
 
