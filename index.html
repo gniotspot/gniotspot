@@ -524,7 +524,15 @@
 //  zawartości repo GitHub. Kiedy wgrywasz nowy plik do img/ na GitHubie,
 //  dopisz jego nazwę tutaj przyciskiem "+ Dodaj nazwę do listy".
 // ======================================================================
-const DEFAULT_IMG_LIBRARY = ["IMG001.jpg", "IMG002.jpg", "IMG003.jpg"];
+const DEFAULT_IMG_LIBRARY = [
+  "logo.jpg",
+  "IMG001.jpg",
+  "IMG002.jpg",
+  "IMG003.jpg",
+  "IMG004.jpg",
+  "IMG005.jpg",
+  "IMG006.jpg"
+];
 
 function loadImgLibrary(){
   try {
@@ -551,9 +559,9 @@ whenFirebaseReady(() => {
     onSnapshot, updateDoc, increment, query, orderBy, serverTimestamp
   } = window.__fb;
 
-  const productsCol   = collection(db, "sklep", "dane", "produkty");
+  const productsCol    = collection(db, "sklep", "dane", "produkty");
   const promosCol      = collection(db, "sklep", "dane", "promocje");
-  const reviewsCol      = collection(db, "sklep", "dane", "opinie");
+  const reviewsCol     = collection(db, "sklep", "dane", "opinie");
   const settingsDoc    = doc(db, "sklep", "ustawienia");
 
   let products = [];
@@ -563,20 +571,20 @@ whenFirebaseReady(() => {
   let isAdmin = false;
   let selectedProductImages = []; // do formularza dodawania produktu, max 3
 
-  const productGrid   = document.getElementById("productGrid");
-  const emptyState    = document.getElementById("emptyState");
-  const reviewsGrid   = document.getElementById("reviewsGrid");
-  const reviewsEmpty  = document.getElementById("reviewsEmpty");
-  const topBanner     = document.getElementById("topBanner");
+  const productGrid    = document.getElementById("productGrid");
+  const emptyState     = document.getElementById("emptyState");
+  const reviewsGrid    = document.getElementById("reviewsGrid");
+  const reviewsEmpty   = document.getElementById("reviewsEmpty");
+  const topBanner      = document.getElementById("topBanner");
   const topBannerText = document.getElementById("topBannerText");
-  const shippingDot   = document.getElementById("shippingDot");
+  const shippingDot    = document.getElementById("shippingDot");
   const shippingStatusText = document.getElementById("shippingStatusText");
   const countdownText = document.getElementById("countdownText");
-  const viewerCount   = document.getElementById("viewerCount");
-  const tiktokLink    = document.getElementById("tiktokLink");
-  const vintedLink    = document.getElementById("vintedLink");
-  const logoImg       = document.getElementById("logoImg");
-  const startDate     = document.getElementById("startDate");
+  const viewerCount    = document.getElementById("viewerCount");
+  const tiktokLink     = document.getElementById("tiktokLink");
+  const vintedLink     = document.getElementById("vintedLink");
+  const logoImg        = document.getElementById("logoImg");
+  const startDate      = document.getElementById("startDate");
 
   function escapeHtml(str){
     const div = document.createElement("div");
@@ -585,7 +593,7 @@ whenFirebaseReady(() => {
   }
 
   function imgUrl(name){
-    return "img/" + name;
+    return "./img/" + name;
   }
 
   // ======================================================================
@@ -637,9 +645,9 @@ whenFirebaseReady(() => {
           ${inStock
             ? (p.vintedUrl
                 ? `<button data-id="${p.id}" data-url="${escapeHtml(p.vintedUrl)}"
-                     class="buy-btn btn-vinted rounded-lg py-3 text-sm focus-ring">Kup na Vinted</button>`
+                       class="buy-btn btn-vinted rounded-lg py-3 text-sm focus-ring">Kup na Vinted</button>`
                 : `<button disabled title="Link do oferty jeszcze nie ustawiony"
-                     class="btn-vinted rounded-lg py-3 text-sm" disabled>Kup na Vinted (wkrótce)</button>`)
+                       class="btn-vinted rounded-lg py-3 text-sm" disabled>Kup na Vinted (wkrótce)</button>`)
             : `<button disabled class="btn-sold rounded-lg py-3 text-sm cursor-not-allowed">Wyprzedane / Brak stocku</button>`
           }
         </div>
@@ -674,6 +682,7 @@ whenFirebaseReady(() => {
       });
     });
   }
+});
 
   // ======================================================================
   //  RENDER: OPINIE
