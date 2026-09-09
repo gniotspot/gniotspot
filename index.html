@@ -226,7 +226,7 @@
     width: 16px;
   }
 
-  /* Picker miniaturek z repo w adminie */
+  /* Picker miniaturek ze stałych slotów img/ w adminie */
   .img-pick{
     border: 2px solid var(--card-border);
     cursor: pointer;
@@ -235,6 +235,30 @@
   }
   .img-pick.selected{ border-color: var(--acid); }
   .img-pick:hover{ border-color: var(--acid-dim); }
+
+  /* Popup zaufania */
+  #trustPopup{
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  #trustPopup.tp-hidden{
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+  }
+  #trustPopup.tp-visible{
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  details > summary{ list-style: none; }
+  details > summary::-webkit-details-marker{ display:none; }
+  details > summary::after{
+    content: "+";
+    float: right;
+    color: var(--acid);
+    font-weight: 700;
+  }
+  details[open] > summary::after{ content: "–"; }
 </style>
 </head>
 
@@ -288,6 +312,28 @@
   </div>
 </header>
 
+<!-- ============ PASEK ZAUFANIA ============ -->
+<section class="max-w-5xl mx-auto px-5 pt-8">
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="tag-card rounded-xl p-4 text-center">
+      <div class="text-2xl mb-1" aria-hidden="true">🔒</div>
+      <p class="text-xs text-[var(--paper-dim)]">Płatność i dane przez Vinted</p>
+    </div>
+    <div class="tag-card rounded-xl p-4 text-center">
+      <div class="text-2xl mb-1" aria-hidden="true">📦</div>
+      <p class="text-xs text-[var(--paper-dim)]">Wysyłka tego samego dnia</p>
+    </div>
+    <div class="tag-card rounded-xl p-4 text-center">
+      <div class="text-2xl mb-1" aria-hidden="true">💬</div>
+      <p class="text-xs text-[var(--paper-dim)]">Szybki kontakt, realne odpowiedzi</p>
+    </div>
+    <div class="tag-card rounded-xl p-4 text-center">
+      <div class="text-2xl mb-1" aria-hidden="true">⭐</div>
+      <p class="text-xs text-[var(--paper-dim)]"><span id="reviewCountBadge">0</span> opinii klientów</p>
+    </div>
+  </div>
+</section>
+
 <!-- ============ PRODUKTY ============ -->
 <main class="max-w-5xl mx-auto px-5 py-12 sm:py-16">
   <div class="flex items-center gap-3 mb-8">
@@ -319,6 +365,32 @@
   <p id="reviewsEmpty" class="hidden text-center text-[var(--paper-dim)] py-8">
     Pierwsze opinie już wkrótce.
   </p>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="max-w-5xl mx-auto px-5 py-12 sm:py-16 border-t border-[var(--card-border)]">
+  <div class="flex items-center gap-3 mb-8">
+    <span class="text-2xl" aria-hidden="true">❓</span>
+    <h2 class="font-display font-bold text-2xl sm:text-3xl">Najczęstsze pytania</h2>
+  </div>
+  <div class="space-y-3">
+    <details class="tag-card rounded-xl p-4">
+      <summary class="cursor-pointer font-semibold text-sm focus-ring">Jak zamówić?</summary>
+      <p class="text-sm text-[var(--paper-dim)] mt-2">Wybierz produkt i kliknij „Kup na Vinted” — trafisz na ofertę, gdzie kupujesz i płacisz bezpośrednio przez Vinted. Nie zbieram żadnych danych poza tą platformą.</p>
+    </details>
+    <details class="tag-card rounded-xl p-4">
+      <summary class="cursor-pointer font-semibold text-sm focus-ring">Kiedy dostanę paczkę?</summary>
+      <p class="text-sm text-[var(--paper-dim)] mt-2">Jeśli status na górze strony pokazuje „Wysyłam dziś”, paczka trafia do InPostu jeszcze tego samego dnia, w oknie 15:00–20:00 — paczkomat albo kurier, do wyboru przy zamówieniu.</p>
+    </details>
+    <details class="tag-card rounded-xl p-4">
+      <summary class="cursor-pointer font-semibold text-sm focus-ring">Czy mogę zwrócić produkt?</summary>
+      <p class="text-sm text-[var(--paper-dim)] mt-2">Tak — zwroty i reklamacje przebiegają zgodnie z zasadami platformy Vinted, tak jak każda inna transakcja tam zawarta.</p>
+    </details>
+    <details class="tag-card rounded-xl p-4">
+      <summary class="cursor-pointer font-semibold text-sm focus-ring">Czy to bezpieczne?</summary>
+      <p class="text-sm text-[var(--paper-dim)] mt-2">Całość zamówienia — płatność, dane, komunikacja — przechodzi przez Vinted. Nie proszę o przelewy poza platformą ani o dane karty na czacie.</p>
+    </details>
+  </div>
 </section>
 
 <!-- ============ STOPKA ============ -->
@@ -371,6 +443,14 @@
     </button>
   </div>
 </footer>
+
+<!-- ============ POPUP ZAUFANIA ============ -->
+<div id="trustPopup" class="tp-hidden fixed bottom-4 left-4 right-4 sm:right-auto sm:max-w-xs z-40" aria-live="polite">
+  <div class="tag-card rounded-xl p-4 pr-9 relative shadow-lg">
+    <button id="trustPopupClose" class="absolute top-2 right-2 text-[var(--paper-dim)] hover:text-[var(--paper)] text-xs focus-ring" aria-label="Zamknij powiadomienie">✕</button>
+    <p id="trustPopupText" class="text-sm leading-snug"></p>
+  </div>
+</div>
 
 <!-- ============ MODAL: LOGOWANIE ADMINA ============ -->
 <div id="loginModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
@@ -429,28 +509,21 @@
           <input id="linkTiktok" type="url" placeholder="https://www.tiktok.com/@..." class="w-full rounded-lg px-3 py-2 text-sm focus-ring">
         </div>
         <div>
-          <label class="text-xs text-[var(--paper-dim)] block mb-1">Logo — plik z repo (wgraj do folderu <code class="text-[var(--acid)]">img/</code> na GitHubie, potem wybierz)</label>
-          <div id="logoPickerRow" class="flex items-center gap-3">
-            <input id="linkLogo" type="text" placeholder="np. IMG001.jpg" class="flex-1 rounded-lg px-3 py-2 text-sm focus-ring">
-          </div>
+          <label class="text-xs text-[var(--paper-dim)] block mb-1">Logo — wybierz jeden z 6 stałych slotów</label>
           <div id="logoGallery" class="flex flex-wrap gap-2 mt-2"></div>
+          <input id="linkLogo" type="hidden">
         </div>
         <button type="submit" class="btn-acid rounded-lg px-4 py-2 text-sm focus-ring">Zapisz linki i logo</button>
       </form>
     </section>
 
-    <!-- Galeria zdjęć w repo -->
+    <!-- Zdjęcia: stałe sloty IMG001-IMG006 -->
     <section class="tag-card rounded-2xl p-5 mb-6">
-      <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🖼️</span> Galeria zdjęć (z repo)</h3>
+      <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🖼️</span> Zdjęcia (6 stałych slotów)</h3>
       <p class="text-xs text-[var(--paper-dim)] mb-3 leading-relaxed">
-        Jak to działa: wgraj zdjęcie do folderu <code class="text-[var(--acid)]">img/</code> w repozytorium na GitHubie (przez stronę github.com → Add file → nazwij np. <code class="text-[var(--acid)]">IMG004.jpg</code>). Potem kliknij "Odśwież listę" — jeśli plik faktycznie tam jest, pojawi się tu jako miniatura i będziesz mogła go wybrać przy produkcie albo jako logo. Panel admina sam NIE wgrywa plików na GitHub — to trzeba zrobić ręcznie na stronie repo (przeglądarka nie ma do tego dostępu).
+        Zdjęcia mają 6 stałych nazw: <code class="text-[var(--acid)]">IMG001.jpg</code> do <code class="text-[var(--acid)]">IMG006.jpg</code>, w folderze <code class="text-[var(--acid)]">img/</code> w repo na GitHubie. Żeby zmienić to, co się wyświetla — wejdź na stronę repo na GitHubie, otwórz dany plik (np. IMG003.jpg), kliknij ołówek/„Add file → Upload files” i wgraj nową grafikę pod dokładnie tą samą nazwą, żeby ją nadpisać. Panel admina tylko wybiera, który slot pokazać gdzie — nie wgrywa plików (przeglądarka nie ma do tego dostępu).
       </p>
-      <div class="flex items-center gap-2 mb-3">
-        <input id="newImgName" type="text" placeholder="np. IMG004.jpg" class="flex-1 rounded-lg px-3 py-2 text-sm focus-ring">
-        <button id="addImgNameBtn" class="btn-ghost rounded-lg px-4 py-2 text-sm focus-ring">+ Dodaj nazwę do listy</button>
-      </div>
-      <div id="imgLibraryGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
-      <p class="text-xs text-[var(--paper-dim)] mt-2">Aktualnie w repo: <code class="text-[var(--acid)]">img/IMG001.jpg</code> (logo), <code class="text-[var(--acid)]">img/IMG002.jpg</code> (clicker), <code class="text-[var(--acid)]">img/IMG003.jpg</code> (masło).</p>
+      <div id="imgLibraryGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-2"></div>
     </section>
 
     <!-- Kody rabatowe -->
@@ -489,7 +562,7 @@
     <section class="tag-card rounded-2xl p-5 mb-6">
       <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🧸</span> Produkty</h3>
       <p class="text-xs text-[var(--paper-dim)] mb-4">
-        Wybierz do 3 zdjęć z galerii repo (sekcja wyżej) klikając miniaturki poniżej — pierwsze wybrane będzie zdjęciem głównym.
+        Wybierz do 3 zdjęć ze stałych slotów (sekcja wyżej) klikając miniaturki poniżej — pierwsze wybrane będzie zdjęciem głównym.
       </p>
 
       <form id="productForm" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
@@ -498,7 +571,7 @@
 
         <div class="sm:col-span-2">
           <p class="text-xs text-[var(--paper-dim)] mb-1">Zdjęcia produktu (max 3, kliknij by wybrać/odznaczyć)</p>
-          <div id="productImgPicker" class="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-1"></div>
+          <div id="productImgPicker" class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-1"></div>
           <p id="productImgSelectedText" class="text-xs text-[var(--acid)]"></p>
         </div>
 
@@ -518,38 +591,10 @@
 </div>
 
 <script>
-// ======================================================================
-//  BIBLIOTEKA NAZW PLIKÓW W img/ — trzymana lokalnie w przeglądarce
-//  (localStorage), bo strona statyczna nie ma dostępu do listowania
-//  zawartości repo GitHub. Kiedy wgrywasz nowy plik do img/ na GitHubie,
-//  dopisz jego nazwę tutaj przyciskiem "+ Dodaj nazwę do listy".
-// ======================================================================
-const DEFAULT_IMG_LIBRARY = [
-  "logo.jpg",
-  "IMG001.jpg",
-  "IMG002.jpg",
-  "IMG003.jpg",
-  "IMG004.jpg",
-  "IMG005.jpg",
-  "IMG006.jpg"
-];
-
-function loadImgLibrary(){
-  try {
-    const raw = localStorage.getItem("gniotspot_img_library");
-    if (raw) return JSON.parse(raw);
-  } catch(e){}
-  return [...DEFAULT_IMG_LIBRARY];
-}
-function saveImgLibrary(list){
-  try { localStorage.setItem("gniotspot_img_library", JSON.stringify(list)); } catch(e){}
-}
-let imgLibrary = loadImgLibrary();
-
-function whenFirebaseReady(cb){
+whenFirebaseReady = function(cb){
   if (window.__fb) return cb();
   window.addEventListener("fb-ready", () => cb(), { once: true });
-}
+};
 
 whenFirebaseReady(() => {
   const {
@@ -564,6 +609,12 @@ whenFirebaseReady(() => {
   const reviewsCol     = collection(db, "sklep", "dane", "opinie");
   const settingsDoc    = doc(db, "sklep", "ustawienia");
 
+  // ======================================================================
+  //  6 STAŁYCH SLOTÓW ZDJĘĆ — img/IMG001.jpg .. img/IMG006.jpg
+  //  Żeby zmienić grafikę, podmień plik o tej samej nazwie w repo GitHub.
+  // ======================================================================
+  const IMAGES = ["IMG001.jpg","IMG002.jpg","IMG003.jpg","IMG004.jpg","IMG005.jpg","IMG006.jpg"];
+
   let products = [];
   let promos = [];
   let reviews = [];
@@ -575,11 +626,12 @@ whenFirebaseReady(() => {
   const emptyState     = document.getElementById("emptyState");
   const reviewsGrid    = document.getElementById("reviewsGrid");
   const reviewsEmpty   = document.getElementById("reviewsEmpty");
+  const reviewCountBadge = document.getElementById("reviewCountBadge");
   const topBanner      = document.getElementById("topBanner");
-  const topBannerText = document.getElementById("topBannerText");
+  const topBannerText  = document.getElementById("topBannerText");
   const shippingDot    = document.getElementById("shippingDot");
   const shippingStatusText = document.getElementById("shippingStatusText");
-  const countdownText = document.getElementById("countdownText");
+  const countdownText  = document.getElementById("countdownText");
   const viewerCount    = document.getElementById("viewerCount");
   const tiktokLink     = document.getElementById("tiktokLink");
   const vintedLink     = document.getElementById("vintedLink");
@@ -682,12 +734,12 @@ whenFirebaseReady(() => {
       });
     });
   }
-});
 
   // ======================================================================
   //  RENDER: OPINIE
   // ======================================================================
   function renderReviews(){
+    reviewCountBadge.textContent = reviews.length;
     if (reviews.length === 0){
       reviewsGrid.innerHTML = "";
       reviewsEmpty.classList.remove("hidden");
@@ -757,6 +809,60 @@ whenFirebaseReady(() => {
   setInterval(tickViewerCount, 12000);
 
   // ======================================================================
+  //  POPUP ZAUFANIA — pokazuje prawdziwe zasady sklepu i (czasem) prawdziwe
+  //  opinie klientów. Świadomie NIE symuluje fałszywych "zamówień" innych
+  //  osób — to byłoby wprowadzanie kupujących w błąd.
+  // ======================================================================
+  const trustMessages = [
+    "🔒 Płatność i dane kupującego zabezpieczone przez system Vinted.",
+    "📦 Wysyłam tego samego dnia w oknie 15:00–20:00, prosto z InPostu.",
+    "💬 Piszesz — odpisuję. Kontakt przez Vinted albo TikTok, bez pośredników.",
+    "✅ Sprzedaż jawna i zgodna z regulaminem Vinted — bez ukrytych zasad.",
+    "🧾 Pełny regulamin sprzedaży jest zawsze dostępny na dole strony.",
+    "🌱 Działam od {startDate} — każda opinia niżej jest od prawdziwego klienta.",
+    "↩️ Zwroty i reklamacje przebiegają dokładnie tak, jak przewiduje regulamin Vinted."
+  ];
+
+  function pickTrustMessage(){
+    if (reviews.length > 0 && Math.random() < 0.35){
+      const r = reviews[Math.floor(Math.random() * reviews.length)];
+      return `⭐ „${escapeHtml(r.text)}" — ${escapeHtml(r.author)}`;
+    }
+    const base = trustMessages[Math.floor(Math.random() * trustMessages.length)];
+    return base.replace("{startDate}", startDate.textContent || "2025");
+  }
+
+  const trustPopupEl   = document.getElementById("trustPopup");
+  const trustPopupText = document.getElementById("trustPopupText");
+  const trustPopupClose= document.getElementById("trustPopupClose");
+  let trustPopupHideTimer = null;
+
+  function showTrustPopup(){
+    trustPopupText.innerHTML = pickTrustMessage();
+    trustPopupEl.classList.remove("tp-hidden");
+    trustPopupEl.classList.add("tp-visible");
+    clearTimeout(trustPopupHideTimer);
+    trustPopupHideTimer = setTimeout(() => {
+      trustPopupEl.classList.remove("tp-visible");
+      trustPopupEl.classList.add("tp-hidden");
+    }, 6000);
+  }
+  trustPopupClose.addEventListener("click", () => {
+    clearTimeout(trustPopupHideTimer);
+    trustPopupEl.classList.remove("tp-visible");
+    trustPopupEl.classList.add("tp-hidden");
+  });
+
+  function scheduleTrustPopup(){
+    const delayMs = (3 + Math.random() * 12) * 1000; // losowo 3–15s
+    setTimeout(() => {
+      showTrustPopup();
+      scheduleTrustPopup();
+    }, delayMs);
+  }
+  scheduleTrustPopup();
+
+  // ======================================================================
   //  FIRESTORE: NASŁUCHIWANIE NA ŻYWO
   // ======================================================================
   onSnapshot(productsCol, snap => {
@@ -803,6 +909,7 @@ whenFirebaseReady(() => {
     document.getElementById("shippingToggleLabel").textContent = shippingActive
       ? "Włączona — klienci widzą, że wysyłam dziś"
       : "Wyłączona — klienci widzą komunikat o braku wysyłki";
+    renderImagePickers();
   }, err => console.error("Błąd ustawień:", err));
 
   // ======================================================================
@@ -820,7 +927,7 @@ whenFirebaseReady(() => {
   adminOpenBtn.addEventListener("click", () => {
     if (isAdmin){
       adminModal.classList.remove("hidden");
-      renderImgLibrary();
+      renderImagePickers();
     } else {
       loginModal.classList.remove("hidden");
     }
@@ -852,7 +959,7 @@ whenFirebaseReady(() => {
     isAdmin = !!user;
     if (isAdmin){
       adminModal.classList.remove("hidden");
-      renderImgLibrary();
+      renderImagePickers();
     }
   });
 
@@ -881,37 +988,32 @@ whenFirebaseReady(() => {
   });
 
   // ======================================================================
-  //  BIBLIOTEKA ZDJĘĆ Z REPO (nazwy plików trzymane lokalnie)
+  //  PICKERY OPARTE O 6 STAŁYCH SLOTÓW ZDJĘĆ
   // ======================================================================
-  function renderImgLibrary(){
+  function renderImagePickers(){
     const grid = document.getElementById("imgLibraryGrid");
     const logoGallery = document.getElementById("logoGallery");
     const productPicker = document.getElementById("productImgPicker");
+    if (!grid || !logoGallery || !productPicker) return;
 
-    const thumb = (name, onClick, extraClass = "") => `
-      <div class="img-pick rounded-lg aspect-square ${extraClass}" data-name="${escapeHtml(name)}" title="${escapeHtml(name)}">
+    const currentLogo = document.getElementById("linkLogo").value;
+
+    const thumb = (name, selected) => `
+      <div class="img-pick rounded-lg aspect-square ${selected ? "selected" : ""}" data-name="${escapeHtml(name)}" title="${escapeHtml(name)}">
         <img src="${imgUrl(name)}" alt="${escapeHtml(name)}" loading="lazy" class="w-full h-full object-cover"
              onerror="this.parentElement.classList.add('opacity-40')">
       </div>`;
 
-    grid.innerHTML = imgLibrary.map(name => `
-      <div class="relative">
-        ${thumb(name)}
-        <button data-remove="${escapeHtml(name)}" class="remove-img-name absolute -top-1 -right-1 bg-[var(--warn)] text-white text-[10px] w-4 h-4 rounded-full leading-none">✕</button>
+    // Podgląd wszystkich 6 slotów
+    grid.innerHTML = IMAGES.map(name => `
+      <div>
+        ${thumb(name, false)}
+        <p class="text-[10px] text-center text-[var(--paper-dim)] mt-1">${escapeHtml(name)}</p>
       </div>
-    `).join("") || `<p class="text-xs text-[var(--paper-dim)] col-span-full">Lista pusta — dodaj nazwę pliku powyżej.</p>`;
-
-    grid.querySelectorAll(".remove-img-name").forEach(btn => {
-      btn.addEventListener("click", () => {
-        imgLibrary = imgLibrary.filter(n => n !== btn.dataset.remove);
-        saveImgLibrary(imgLibrary);
-        renderImgLibrary();
-      });
-    });
+    `).join("");
 
     // Logo picker
-    logoGallery.innerHTML = imgLibrary.map(name => thumb(name, null,
-      document.getElementById("linkLogo").value === name ? "selected" : "")).join("");
+    logoGallery.innerHTML = IMAGES.map(name => thumb(name, currentLogo === name)).join("");
     logoGallery.querySelectorAll(".img-pick").forEach(el => {
       el.addEventListener("click", () => {
         document.getElementById("linkLogo").value = el.dataset.name;
@@ -921,8 +1023,7 @@ whenFirebaseReady(() => {
     });
 
     // Product image picker (max 3)
-    productPicker.innerHTML = imgLibrary.map(name => thumb(name, null,
-      selectedProductImages.includes(name) ? "selected" : "")).join("");
+    productPicker.innerHTML = IMAGES.map(name => thumb(name, selectedProductImages.includes(name))).join("");
     productPicker.querySelectorAll(".img-pick").forEach(el => {
       el.addEventListener("click", () => {
         const name = el.dataset.name;
@@ -935,7 +1036,7 @@ whenFirebaseReady(() => {
           }
           selectedProductImages.push(name);
         }
-        renderImgLibrary();
+        renderImagePickers();
         updateSelectedImagesText();
       });
     });
@@ -947,18 +1048,6 @@ whenFirebaseReady(() => {
       ? `Wybrane (${selectedProductImages.length}/3): ${selectedProductImages.join(", ")}`
       : "Nie wybrano jeszcze żadnego zdjęcia.";
   }
-
-  document.getElementById("addImgNameBtn").addEventListener("click", () => {
-    const input = document.getElementById("newImgName");
-    const name = input.value.trim();
-    if (!name) return;
-    if (!imgLibrary.includes(name)){
-      imgLibrary.push(name);
-      saveImgLibrary(imgLibrary);
-      renderImgLibrary();
-    }
-    input.value = "";
-  });
 
   // ======================================================================
   //  ADMIN: KODY RABATOWE
@@ -1059,7 +1148,7 @@ whenFirebaseReady(() => {
       e.target.reset();
       document.getElementById("pInStock").checked = true;
       selectedProductImages = [];
-      renderImgLibrary();
+      renderImagePickers();
       updateSelectedImagesText();
     } catch (err){ console.error(err); alert("Błąd zapisu produktu."); }
   });
@@ -1111,6 +1200,7 @@ whenFirebaseReady(() => {
   updateSelectedImagesText();
   renderShippingStatus();
   updateCountdown();
+  renderImagePickers();
 });
 </script>
 
