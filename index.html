@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GniotSpot — masy i clickery, wysyłka tego samego dnia</title>
+<meta name="description" content="GniotSpot — fidget masy i clickery. Zamówienia przez Vinted, wysyłka tego samego dnia 15:00-20:00.">
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Fonts: Space Grotesk (display) + Inter (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, setDoc, addDoc, deleteDoc,
+    onSnapshot, updateDoc, increment, query, orderBy, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDlUUbPAEmS0ZTtZeWOSLzVRUNwPXGOZNw",
+    authDomain: "fidgetsklep.firebaseapp.com",
+    projectId: "fidgetsklep",
+    storageBucket: "fidgetsklep.firebasestorage.app",
+    messagingSenderId: "838091580439",
+    appId: "1:838091580439:web:4a91a0f885bf722b05a852"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Udostępniamy globalnie, żeby reszta skryptów (poniżej, non-module) mogła korzystać
+  window.__fb = {
+    auth, db,
+    signInWithEmailAndPassword, onAuthStateChanged, signOut,
+    collection, doc, setDoc, addDoc, deleteDoc,
+    onSnapshot, updateDoc, increment, query, orderBy, serverTimestamp
+  };
+
+  // Sygnał dla reszty kodu, że Firebase jest gotowe
+  window.dispatchEvent(new Event("fb-ready"));
+</script>
+
+<style>
+  :root{
+    --bg: #0a0f0a;
+    --bg-soft: #10160f;
+    --card: #141d12;
+    --card-border: #24361f;
+    --acid: #c8ff3d;
+    --acid-dim: #9fd424;
+    --paper: #e8ffd6;
+    --paper-dim: #a9c39a;
+    --warn: #ff4d6d;
+    --vinted: #09B1BA;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body{
+    background-color: var(--bg);
+    color: var(--paper);
+    font-family: 'Inter', sans-serif;
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(200,255,61,0.06), transparent 35%),
+      radial-gradient(circle at 85% 30%, rgba(200,255,61,0.04), transparent 40%);
+  }
+
+  .font-display{ font-family: 'Space Grotesk', sans-serif; }
+
+  /* Tapeta tekstowa w hero — powtórzony napis jako tekstura, nie baner */
+  .hero-wallpaper{
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    opacity: 0.5;
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 90%);
+    mask-image: linear-gradient(to bottom, black, transparent 90%);
+  }
+  .hero-wallpaper .row{
+    white-space: nowrap;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 3.5rem;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(200,255,61,0.18);
+    line-height: 1.6;
+  }
+
+  /* Kafelek produktu — etykieta/tag, nie SaaS-karta */
+  .tag-card{
+    background: var(--card);
+    border: 2px solid var(--card-border);
+    position: relative;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .tag-card::before{
+    content:"";
+    position:absolute;
+    top:-2px; left: 24px;
+    width: 18px; height: 18px;
+    background: var(--bg);
+    border-right: 2px solid var(--card-border);
+    border-bottom: 2px solid var(--card-border);
+    transform: rotate(45deg) translateY(-50%);
+    border-radius: 3px;
+  }
+  .tag-card:hover{
+    transform: rotate(-0.6deg) translateY(-2px);
+    border-color: var(--acid-dim);
+  }
+
+  .btn-vinted{
+    background: var(--vinted);
+    color: #06282a;
+    font-weight: 700;
+    transition: filter 0.15s ease, transform 0.1s ease;
+  }
+  .btn-vinted:hover{ filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-vinted:active{ transform: translateY(0); }
+
+  .btn-sold{
+    background: #2a2a2a;
+    color: #7a7a7a;
+    cursor: not-allowed;
+  }
+
+  .btn-acid{
+    background: var(--acid);
+    color: #0a0f0a;
+    font-weight: 700;
+    transition: filter 0.15s ease;
+  }
+  .btn-acid:hover{ filter: brightness(1.08); }
+
+  .pill{
+    border: 1px solid var(--card-border);
+    background: var(--card);
+  }
+
+  ::selection{ background: var(--acid); color: #0a0f0a; }
+
+  input, textarea{
+    background: var(--bg-soft);
+    border: 1px solid var(--card-border);
+    color: var(--paper);
+  }
+  input:focus, textarea:focus{
+    outline: 2px solid var(--acid);
+    outline-offset: 1px;
+  }
+
+  input[type="checkbox"].switch{
+    appearance: none;
+    width: 46px; height: 26px;
+    background: #2a2a2a;
+    border-radius: 999px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border: 1px solid var(--card-border);
+  }
+  input[type="checkbox"].switch::before{
+    content:"";
+    position:absolute;
+    top: 2px; left: 2px;
+    width: 20px; height: 20px;
+    background: #999;
+    border-radius: 50%;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  input[type="checkbox"].switch:checked{ background: rgba(200,255,61,0.25); border-color: var(--acid-dim); }
+  input[type="checkbox"].switch:checked::before{
+    transform: translateX(20px);
+    background: var(--acid);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+
+  .focus-ring:focus-visible{
+    outline: 2px solid var(--acid);
+    outline-offset: 2px;
+  }
+
+  #adminModal, #loginModal{
+    backdrop-filter: blur(6px);
+  }
+
+  .skeleton{
+    background: linear-gradient(90deg, var(--card) 25%, var(--card-border) 50%, var(--card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer{
+    0%{ background-position: 200% 0; }
+    100%{ background-position: -200% 0; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- ============ BANER GÓRNY: rabaty / status wysyłki ============ -->
+<div id="topBanner" class="w-full bg-[var(--acid)] text-[#0a0f0a] text-sm font-semibold py-2 px-4 text-center hidden">
+  <span id="topBannerText"></span>
+</div>
+
+<!-- ============ NAGŁÓWEK ============ -->
+<header class="relative overflow-hidden border-b border-[var(--card-border)]">
+  <div class="hero-wallpaper" aria-hidden="true">
+    <div class="row">GNIOTSPOT · GNIOTSPOT · GNIOTSPOT · GNIOTSPOT · GNIOTSPOT ·</div>
+    <div class="row">GNIOTSPOT · GNIOTSPOT · GNIOTSPOT · GNIOTSPOT · GNIOTSPOT ·</div>
+    <div class="row">GNIOTSPOT · GNIOTSPOT · GNIOTSPOT · GNIOTSPOT · GNIOTSPOT ·</div>
+  </div>
+
+  <div class="relative z-10 max-w-5xl mx-auto px-5 pt-10 pb-12 sm:pt-14 sm:pb-16">
+    <div class="flex items-center justify-between mb-8 sm:mb-10">
+      <div class="font-display font-bold text-2xl sm:text-3xl tracking-tight">
+        Gniot<span class="text-[var(--acid)]">Spot</span>
+      </div>
+      <div class="pill rounded-full px-3 py-1.5 text-xs sm:text-sm flex items-center gap-2">
+        <span id="shippingDot" class="w-2 h-2 rounded-full bg-[var(--acid)]"></span>
+        <span id="shippingStatusText">sprawdzam wysyłkę…</span>
+      </div>
+    </div>
+
+    <h1 class="font-display font-bold text-3xl sm:text-5xl leading-tight max-w-2xl">
+      Gniotki i clickery,<br> wysyłam <span class="text-[var(--acid)]">jeszcze dziś</span>.
+    </h1>
+    <p class="mt-4 text-[var(--paper-dim)] max-w-lg text-sm sm:text-base">
+      Dostawa tego samego dnia — zamówienia wysyłam w godzinach 15:00–20:00, od ręki po powrocie do domu. Wszystko przez Vinted, bez ogarniania kont, bez kombinowania.
+    </p>
+
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <div class="pill rounded-full px-4 py-2 text-sm flex items-center gap-2">
+        <span aria-hidden="true">👀</span>
+        <span><span id="viewerCount" class="font-semibold text-[var(--acid)]">—</span> osób ogląda teraz</span>
+      </div>
+      <div class="pill rounded-full px-4 py-2 text-sm flex items-center gap-2">
+        <span aria-hidden="true">⏳</span>
+        <span id="countdownText">liczę czas do końca wysyłki…</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ PRODUKTY ============ -->
+<main class="max-w-5xl mx-auto px-5 py-12 sm:py-16">
+  <div class="flex items-center gap-3 mb-8">
+    <span class="text-2xl" aria-hidden="true">🧴</span>
+    <h2 class="font-display font-bold text-2xl sm:text-3xl">Co gniotę na sprzedaż</h2>
+  </div>
+
+  <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <!-- Skeletony podczas ładowania -->
+    <div class="tag-card rounded-2xl p-5 h-80 skeleton"></div>
+    <div class="tag-card rounded-2xl p-5 h-80 skeleton"></div>
+  </div>
+
+  <p id="emptyState" class="hidden text-center text-[var(--paper-dim)] py-16">
+    Zaraz coś tu wstawię — wpadnij później 🧃
+  </p>
+</main>
+
+<!-- ============ OPINIE ============ -->
+<section class="max-w-5xl mx-auto px-5 py-12 sm:py-16 border-t border-[var(--card-border)]">
+  <div class="flex items-center gap-3 mb-8">
+    <span class="text-2xl" aria-hidden="true">💬</span>
+    <h2 class="font-display font-bold text-2xl sm:text-3xl">Co mówią klienci</h2>
+  </div>
+  <div id="reviewsGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+    <div class="tag-card rounded-2xl p-5 h-40 skeleton"></div>
+    <div class="tag-card rounded-2xl p-5 h-40 skeleton"></div>
+    <div class="tag-card rounded-2xl p-5 h-40 skeleton"></div>
+  </div>
+  <p id="reviewsEmpty" class="hidden text-center text-[var(--paper-dim)] py-8">
+    Pierwsze opinie już wkrótce.
+  </p>
+</section>
+
+<!-- ============ STOPKA ============ -->
+<footer class="border-t border-[var(--card-border)] bg-[var(--bg-soft)]">
+  <div class="max-w-5xl mx-auto px-5 py-12">
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10">
+      <div>
+        <div class="font-display font-bold text-xl mb-3">Gniot<span class="text-[var(--acid)]">Spot</span></div>
+        <p class="text-sm text-[var(--paper-dim)]">Mikro-sklepik z fidget zabawkami. Działam od <span id="startDate">2025</span>, bez pośpiechu, z pasją do gniecenia.</p>
+      </div>
+
+      <div>
+        <h3 class="font-semibold mb-3 text-sm">Zasady zakupów</h3>
+        <ul class="text-sm text-[var(--paper-dim)] space-y-2">
+          <li>📦 Wysyłka tego samego dnia, godziny 15:00–20:00</li>
+          <li>🚚 Nadaję przez InPost (paczkomat / kurier)</li>
+          <li>💸 Płatność i zamówienie realizowane przez Vinted</li>
+          <li>↩️ Zwroty i reklamacje — zgodnie z zasadami Vinted</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="font-semibold mb-3 text-sm">Znajdź mnie</h3>
+        <div class="flex flex-col gap-3">
+          <a href="https://www.vinted.pl/member/k_outfit99" target="_blank" rel="noopener noreferrer"
+             class="btn-vinted rounded-lg px-4 py-2.5 text-sm text-center focus-ring">
+            Profil na Vinted
+          </a>
+          <a href="#" id="tiktokLink" target="_blank" rel="noopener noreferrer"
+             class="rounded-lg px-4 py-2.5 text-sm text-center border border-[var(--card-border)] hover:border-[var(--acid-dim)] transition-colors focus-ring">
+            🎵 TikTok
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-6 border-t border-[var(--card-border)] text-xs text-[var(--paper-dim)] leading-relaxed space-y-2">
+      <p>
+        Sprzedaż prowadzona jako działalność niezarejestrowana (nierejestrowana) w rozumieniu art. 5 ustawy Prawo przedsiębiorców — sprzedaż okazjonalna, niezarobkowa w rozumieniu działalności gospodarczej. Wszystkie transakcje realizowane są bezpośrednio przez platformę Vinted i podlegają jej regulaminowi.
+      </p>
+      <p>
+        Zdjęcia produktów mogą nieznacznie różnić się od rzeczywistego wyglądu (kolor ekranu, oświetlenie). W razie pytań — pisz śmiało przez Vinted lub TikTok.
+      </p>
+    </div>
+
+    <button id="adminOpenBtn" aria-label="Panel administratora" class="mt-8 text-xs text-[var(--card-border)] hover:text-[var(--paper-dim)] transition-colors focus-ring">
+      ⚙
+    </button>
+  </div>
+</footer>
+
+<!-- ============ MODAL: LOGOWANIE ADMINA ============ -->
+<div id="loginModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+  <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-2xl p-6 w-full max-w-sm relative">
+    <button id="loginCloseBtn" class="absolute top-4 right-4 text-[var(--paper-dim)] hover:text-[var(--paper)] focus-ring" aria-label="Zamknij">✕</button>
+    <h2 class="font-display font-bold text-xl mb-1">Panel admina</h2>
+    <p class="text-sm text-[var(--paper-dim)] mb-5">Zaloguj się, żeby zarządzać sklepem.</p>
+
+    <form id="loginForm" class="space-y-3">
+      <div>
+        <label for="loginEmail" class="text-xs text-[var(--paper-dim)] block mb-1">E-mail</label>
+        <input id="loginEmail" type="email" required autocomplete="username"
+               class="w-full rounded-lg px-3 py-2 text-sm focus-ring" placeholder="ty@example.com">
+      </div>
+      <div>
+        <label for="loginPassword" class="text-xs text-[var(--paper-dim)] block mb-1">Hasło</label>
+        <input id="loginPassword" type="password" required autocomplete="current-password"
+               class="w-full rounded-lg px-3 py-2 text-sm focus-ring" placeholder="••••••••">
+      </div>
+      <p id="loginError" class="hidden text-xs text-[var(--warn)]"></p>
+      <button type="submit" class="btn-acid w-full rounded-lg py-2.5 text-sm focus-ring">Zaloguj</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ PANEL ADMINA ============ -->
+<div id="adminModal" class="hidden fixed inset-0 bg-black/80 z-50 overflow-y-auto">
+  <div class="max-w-4xl mx-auto px-4 py-8 sm:py-12">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-bold text-2xl">Panel admina</h2>
+      <div class="flex items-center gap-3">
+        <button id="logoutBtn" class="text-sm text-[var(--paper-dim)] hover:text-[var(--warn)] focus-ring">Wyloguj</button>
+        <button id="adminCloseBtn" class="text-2xl leading-none text-[var(--paper-dim)] hover:text-[var(--paper)] focus-ring" aria-label="Zamknij panel">✕</button>
+      </div>
+    </div>
+
+    <!-- Status wysyłki -->
+    <section class="tag-card rounded-2xl p-5 mb-6">
+      <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🚚</span> Wysyłka dziś (15:00–20:00)</h3>
+      <label class="flex items-center gap-3 cursor-pointer w-fit">
+        <input type="checkbox" id="shippingToggle" class="switch">
+        <span id="shippingToggleLabel" class="text-sm text-[var(--paper-dim)]">sprawdzam…</span>
+      </label>
+    </section>
+
+    <!-- Kody rabatowe -->
+    <section class="tag-card rounded-2xl p-5 mb-6">
+      <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🏷️</span> Kody rabatowe</h3>
+      <form id="promoForm" class="flex flex-wrap gap-2 mb-4">
+        <input id="promoCode" type="text" placeholder="np. SZKOŁA1" required
+               class="flex-1 min-w-[120px] rounded-lg px-3 py-2 text-sm focus-ring">
+        <input id="promoValue" type="number" step="0.01" placeholder="rabat np. 2" required
+               class="w-28 rounded-lg px-3 py-2 text-sm focus-ring">
+        <button type="submit" class="btn-acid rounded-lg px-4 py-2 text-sm focus-ring">Dodaj</button>
+      </form>
+      <div id="promoList" class="space-y-2 text-sm"></div>
+    </section>
+
+    <!-- Statystyki kliknięć -->
+    <section class="tag-card rounded-2xl p-5 mb-6">
+      <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">📊</span> Kliknięcia „Kup na Vinted”</h3>
+      <div id="statsList" class="space-y-2 text-sm"></div>
+    </section>
+
+    <!-- Opinie -->
+    <section class="tag-card rounded-2xl p-5 mb-6">
+      <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">💬</span> Opinie klientów</h3>
+      <form id="reviewForm" class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+        <input id="reviewAuthor" type="text" placeholder="Imię / nick" required
+               class="rounded-lg px-3 py-2 text-sm focus-ring sm:col-span-1">
+        <input id="reviewText" type="text" placeholder="Treść opinii" required
+               class="rounded-lg px-3 py-2 text-sm focus-ring sm:col-span-2">
+        <button type="submit" class="btn-acid rounded-lg px-4 py-2 text-sm focus-ring sm:col-span-3">Dodaj opinię</button>
+      </form>
+      <div id="reviewAdminList" class="space-y-2 text-sm"></div>
+    </section>
+
+    <!-- Produkty -->
+    <section class="tag-card rounded-2xl p-5 mb-6">
+      <h3 class="font-semibold mb-3 flex items-center gap-2"><span aria-hidden="true">🧸</span> Produkty</h3>
+      <p class="text-xs text-[var(--paper-dim)] mb-4">
+        Zdjęcie: wgraj na <a href="https://imgur.com/upload" target="_blank" rel="noopener noreferrer" class="text-[var(--acid)] underline">imgur.com</a>, skopiuj link bezpośredni do obrazka (kończy się na .jpg/.png) i wklej poniżej.
+      </p>
+
+      <form id="productForm" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+        <input id="pName" type="text" placeholder="Nazwa produktu" required class="rounded-lg px-3 py-2 text-sm focus-ring">
+        <input id="pPrice" type="number" step="0.01" placeholder="Cena (zł)" required class="rounded-lg px-3 py-2 text-sm focus-ring">
+        <input id="pImage" type="url" placeholder="Link do zdjęcia (imgur)" class="rounded-lg px-3 py-2 text-sm focus-ring sm:col-span-2">
+        <input id="pVintedUrl" type="url" placeholder="Link do oferty na Vinted" class="rounded-lg px-3 py-2 text-sm focus-ring sm:col-span-2">
+        <textarea id="pDesc" placeholder="Opis produktu" rows="2" class="rounded-lg px-3 py-2 text-sm focus-ring sm:col-span-2"></textarea>
+        <label class="flex items-center gap-2 text-sm sm:col-span-2">
+          <input type="checkbox" id="pInStock" class="switch" checked>
+          <span>Dostępny od razu po dodaniu</span>
+        </label>
+        <button type="submit" class="btn-acid rounded-lg px-4 py-2 text-sm focus-ring sm:col-span-2">Dodaj produkt</button>
+      </form>
+
+      <div id="productAdminList" class="space-y-3"></div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+// ======================================================================
+//  Czekamy aż moduł Firebase (u góry) zainicjalizuje się i wystawi window.__fb
+// ======================================================================
+function whenFirebaseReady(cb){
+  if (window.__fb) return cb();
+  window.addEventListener("fb-ready", () => cb(), { once: true });
+}
+
+whenFirebaseReady(() => {
+  const {
+    auth, db,
+    signInWithEmailAndPassword, onAuthStateChanged, signOut,
+    collection, doc, setDoc, addDoc, deleteDoc,
+    onSnapshot, updateDoc, increment, query, orderBy, serverTimestamp
+  } = window.__fb;
+
+  // ---- Referencje kolekcji / dokumentów Firestore ----
+  const productsCol   = collection(db, "sklep", "dane", "produkty");
+  const promosCol     = collection(db, "sklep", "dane", "promocje");
+  const reviewsCol     = collection(db, "sklep", "dane", "opinie");
+  const settingsDoc   = doc(db, "sklep", "ustawienia");
+
+  // ======================================================================
+  //  STAN LOKALNY
+  // ======================================================================
+  let products = [];
+  let promos = [];
+  let reviews = [];
+  let shippingActive = true;
+  let isAdmin = false;
+
+  // ======================================================================
+  //  ELEMENTY DOM
+  // ======================================================================
+  const productGrid   = document.getElementById("productGrid");
+  const emptyState    = document.getElementById("emptyState");
+  const reviewsGrid   = document.getElementById("reviewsGrid");
+  const reviewsEmpty  = document.getElementById("reviewsEmpty");
+  const topBanner     = document.getElementById("topBanner");
+  const topBannerText = document.getElementById("topBannerText");
+  const shippingDot   = document.getElementById("shippingDot");
+  const shippingStatusText = document.getElementById("shippingStatusText");
+  const countdownText = document.getElementById("countdownText");
+  const viewerCount   = document.getElementById("viewerCount");
+  const tiktokLink    = document.getElementById("tiktokLink");
+  const startDate     = document.getElementById("startDate");
+
+  // ======================================================================
+  //  RENDER: PRODUKTY (frontend)
+  // ======================================================================
+  function renderProducts(){
+    if (products.length === 0){
+      productGrid.innerHTML = "";
+      emptyState.classList.remove("hidden");
+      return;
+    }
+    emptyState.classList.add("hidden");
+
+    productGrid.innerHTML = products.map(p => {
+      const inStock = p.inStock !== false;
+      const imgSrc = p.image || "https://placehold.co/500x400/141d12/c8ff3d?text=GniotSpot";
+      return `
+        <div class="tag-card rounded-2xl p-5 flex flex-col">
+          <div class="rounded-xl overflow-hidden mb-4 aspect-[5/4] bg-[var(--bg-soft)]">
+            <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)}" loading="lazy"
+                 class="w-full h-full object-cover" onerror="this.src='https://placehold.co/500x400/141d12/c8ff3d?text=GniotSpot'">
+          </div>
+          <div class="flex items-start justify-between gap-2 mb-1">
+            <h3 class="font-display font-bold text-lg">${escapeHtml(p.name)}</h3>
+            <span class="font-display font-bold text-lg text-[var(--acid)] whitespace-nowrap">${Number(p.price).toFixed(2)} zł</span>
+          </div>
+          <p class="text-sm text-[var(--paper-dim)] mb-4 flex-1">${escapeHtml(p.description || "")}</p>
+          ${inStock
+            ? `<button data-id="${p.id}" data-url="${escapeHtml(p.vintedUrl || 'https://www.vinted.pl/member/k_outfit99')}"
+                 class="buy-btn btn-vinted rounded-lg py-3 text-sm focus-ring">Kup na Vinted</button>`
+            : `<button disabled class="btn-sold rounded-lg py-3 text-sm cursor-not-allowed">Wyprzedane / Brak stocku</button>`
+          }
+        </div>
+      `;
+    }).join("");
+
+    document.querySelectorAll(".buy-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        const url = btn.dataset.url;
+        updateDoc(doc(productsCol, id), { clicks: increment(1) }).catch(() => {});
+        window.open(url, "_blank", "noopener,noreferrer");
+      });
+    });
+  }
+
+  // ======================================================================
+  //  RENDER: OPINIE (frontend)
+  // ======================================================================
+  function renderReviews(){
+    if (reviews.length === 0){
+      reviewsGrid.innerHTML = "";
+      reviewsEmpty.classList.remove("hidden");
+      return;
+    }
+    reviewsEmpty.classList.add("hidden");
+    reviewsGrid.innerHTML = reviews.map(r => `
+      <div class="tag-card rounded-2xl p-5">
+        <p class="text-sm mb-3">"${escapeHtml(r.text)}"</p>
+        <p class="text-xs text-[var(--paper-dim)] font-semibold">— ${escapeHtml(r.author)}</p>
+      </div>
+    `).join("");
+  }
+
+  // ======================================================================
+  //  RENDER: BANER PROMOCJI
+  // ======================================================================
+  function renderTopBanner(){
+    if (promos.length > 0){
+      const parts = promos.map(pr => `${pr.code}: −${Number(pr.value).toFixed(2)} zł`);
+      topBannerText.textContent = "🎉 Aktywne kody rabatowe — " + parts.join(" · ");
+      topBanner.classList.remove("hidden");
+    } else {
+      topBanner.classList.add("hidden");
+    }
+  }
+
+  // ======================================================================
+  //  STATUS WYSYŁKI (frontend + odliczanie)
+  // ======================================================================
+  function renderShippingStatus(){
+    if (shippingActive){
+      shippingDot.style.background = "var(--acid)";
+      shippingStatusText.textContent = "Wysyłam dziś 15:00–20:00";
+    } else {
+      shippingDot.style.background = "var(--warn)";
+      shippingStatusText.textContent = "Dziś bez wysyłki — wracam jutro";
+    }
+  }
+
+  function updateCountdown(){
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const start = new Date(now); start.setHours(15,0,0,0);
+    const end   = new Date(now); end.setHours(20,0,0,0);
+
+    if (!shippingActive){
+      countdownText.textContent = "dzisiaj wysyłka wstrzymana";
+      return;
+    }
+
+    if (now < start){
+      const diffMs = start - now;
+      const hh = Math.floor(diffMs / 3600000);
+      const mm = Math.floor((diffMs % 3600000) / 60000);
+      countdownText.textContent = `wysyłka startuje za ${hh > 0 ? hh + "h " : ""}${mm}min`;
+    } else if (now >= start && now <= end){
+      const diffMs = end - now;
+      const hh = Math.floor(diffMs / 3600000);
+      const mm = Math.floor((diffMs % 3600000) / 60000);
+      countdownText.textContent = `okno wysyłki zamyka się za ${hh > 0 ? hh + "h " : ""}${mm}min`;
+    } else {
+      countdownText.textContent = "dzisiejsze okno wysyłki zamknięte — wracam jutro o 15:00";
+    }
+  }
+  setInterval(updateCountdown, 30000);
+
+  // ======================================================================
+  //  LICZNIK "X OSÓB OGLĄDA" — symulacja lokalna, oscylująca liczba
+  //  (bez realnego trackingu wielu użytkowników, żeby nie komplikować backendu)
+  // ======================================================================
+  function tickViewerCount(){
+    const base = 3 + Math.floor(Math.sin(Date.now() / 90000) * 2 + 2);
+    const jitter = Math.floor(Math.random() * 2);
+    viewerCount.textContent = Math.max(1, base + jitter);
+  }
+  tickViewerCount();
+  setInterval(tickViewerCount, 12000);
+
+  // ======================================================================
+  //  UTIL
+  // ======================================================================
+  function escapeHtml(str){
+    const div = document.createElement("div");
+    div.textContent = str ?? "";
+    return div.innerHTML;
+  }
+
+  // ======================================================================
+  //  FIRESTORE: NASŁUCHIWANIE NA ŻYWO (onSnapshot)
+  // ======================================================================
+  onSnapshot(productsCol, snap => {
+    products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderProducts();
+    renderProductAdminList();
+    renderStats();
+  }, err => console.error("Błąd produktów:", err));
+
+  onSnapshot(promosCol, snap => {
+    promos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTopBanner();
+    renderPromoList();
+  }, err => console.error("Błąd promocji:", err));
+
+  onSnapshot(reviewsCol, snap => {
+    reviews = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderReviews();
+    renderReviewAdminList();
+  }, err => console.error("Błąd opinii:", err));
+
+  onSnapshot(settingsDoc, snap => {
+    const data = snap.data();
+    if (data){
+      shippingActive = data.shippingActive !== false;
+      if (data.tiktokUrl) tiktokLink.href = data.tiktokUrl;
+      if (data.startDate) startDate.textContent = data.startDate;
+    }
+    renderShippingStatus();
+    updateCountdown();
+    document.getElementById("shippingToggle").checked = shippingActive;
+    document.getElementById("shippingToggleLabel").textContent = shippingActive
+      ? "Włączona — klienci widzą, że wysyłam dziś"
+      : "Wyłączona — klienci widzą komunikat o braku wysyłki";
+  }, err => console.error("Błąd ustawień:", err));
+
+  // ======================================================================
+  //  LOGOWANIE / WYLOGOWANIE
+  // ======================================================================
+  const loginModal   = document.getElementById("loginModal");
+  const adminModal   = document.getElementById("adminModal");
+  const adminOpenBtn = document.getElementById("adminOpenBtn");
+  const loginCloseBtn= document.getElementById("loginCloseBtn");
+  const adminCloseBtn= document.getElementById("adminCloseBtn");
+  const loginForm    = document.getElementById("loginForm");
+  const loginError   = document.getElementById("loginError");
+  const logoutBtn    = document.getElementById("logoutBtn");
+
+  adminOpenBtn.addEventListener("click", () => {
+    if (isAdmin){
+      adminModal.classList.remove("hidden");
+    } else {
+      loginModal.classList.remove("hidden");
+    }
+  });
+  loginCloseBtn.addEventListener("click", () => loginModal.classList.add("hidden"));
+  adminCloseBtn.addEventListener("click", () => adminModal.classList.add("hidden"));
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    loginError.classList.add("hidden");
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      loginModal.classList.add("hidden");
+      loginForm.reset();
+    } catch (err){
+      loginError.textContent = "Nie udało się zalogować — sprawdź e-mail i hasło.";
+      loginError.classList.remove("hidden");
+    }
+  });
+
+  logoutBtn.addEventListener("click", async () => {
+    await signOut(auth);
+    adminModal.classList.add("hidden");
+  });
+
+  onAuthStateChanged(auth, user => {
+    isAdmin = !!user;
+    if (isAdmin){
+      adminModal.classList.remove("hidden");
+    }
+  });
+
+  // ======================================================================
+  //  ADMIN: STATUS WYSYŁKI
+  // ======================================================================
+  document.getElementById("shippingToggle").addEventListener("change", (e) => {
+    setDoc(settingsDoc, { shippingActive: e.target.checked }, { merge: true }).catch(err => {
+      alert("Nie udało się zapisać — zaloguj się ponownie.");
+      console.error(err);
+    });
+  });
+
+  // ======================================================================
+  //  ADMIN: KODY RABATOWE
+  // ======================================================================
+  document.getElementById("promoForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = document.getElementById("promoCode").value.trim().toUpperCase();
+    const value = parseFloat(document.getElementById("promoValue").value);
+    if (!code || isNaN(value)) return;
+    try {
+      await addDoc(promosCol, { code, value, createdAt: serverTimestamp() });
+      e.target.reset();
+    } catch (err){ console.error(err); alert("Błąd zapisu kodu."); }
+  });
+
+  function renderPromoList(){
+    const list = document.getElementById("promoList");
+    if (promos.length === 0){
+      list.innerHTML = `<p class="text-[var(--paper-dim)] text-xs">Brak aktywnych kodów.</p>`;
+      return;
+    }
+    list.innerHTML = promos.map(p => `
+      <div class="flex items-center justify-between bg-[var(--bg-soft)] rounded-lg px-3 py-2">
+        <span><strong class="text-[var(--acid)]">${escapeHtml(p.code)}</strong> — rabat ${Number(p.value).toFixed(2)} zł</span>
+        <button data-id="${p.id}" class="delete-promo text-[var(--warn)] text-xs hover:underline focus-ring">Usuń</button>
+      </div>
+    `).join("");
+    list.querySelectorAll(".delete-promo").forEach(btn => {
+      btn.addEventListener("click", () => deleteDoc(doc(promosCol, btn.dataset.id)).catch(console.error));
+    });
+  }
+
+  // ======================================================================
+  //  ADMIN: STATYSTYKI KLIKNIĘĆ
+  // ======================================================================
+  function renderStats(){
+    const list = document.getElementById("statsList");
+    if (products.length === 0){
+      list.innerHTML = `<p class="text-[var(--paper-dim)] text-xs">Brak produktów.</p>`;
+      return;
+    }
+    list.innerHTML = products.map(p => `
+      <div class="flex items-center justify-between bg-[var(--bg-soft)] rounded-lg px-3 py-2">
+        <span>${escapeHtml(p.name)}</span>
+        <span class="font-semibold text-[var(--acid)]">${p.clicks || 0} kliknięć</span>
+      </div>
+    `).join("");
+  }
+
+  // ======================================================================
+  //  ADMIN: OPINIE
+  // ======================================================================
+  document.getElementById("reviewForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const author = document.getElementById("reviewAuthor").value.trim();
+    const text = document.getElementById("reviewText").value.trim();
+    if (!author || !text) return;
+    try {
+      await addDoc(reviewsCol, { author, text, createdAt: serverTimestamp() });
+      e.target.reset();
+    } catch (err){ console.error(err); alert("Błąd zapisu opinii."); }
+  });
+
+  function renderReviewAdminList(){
+    const list = document.getElementById("reviewAdminList");
+    if (reviews.length === 0){
+      list.innerHTML = `<p class="text-[var(--paper-dim)] text-xs">Brak opinii.</p>`;
+      return;
+    }
+    list.innerHTML = reviews.map(r => `
+      <div class="flex items-center justify-between bg-[var(--bg-soft)] rounded-lg px-3 py-2 gap-2">
+        <span class="truncate">"${escapeHtml(r.text)}" — <strong>${escapeHtml(r.author)}</strong></span>
+        <button data-id="${r.id}" class="delete-review text-[var(--warn)] text-xs hover:underline whitespace-nowrap focus-ring">Usuń</button>
+      </div>
+    `).join("");
+    list.querySelectorAll(".delete-review").forEach(btn => {
+      btn.addEventListener("click", () => deleteDoc(doc(reviewsCol, btn.dataset.id)).catch(console.error));
+    });
+  }
+
+  // ======================================================================
+  //  ADMIN: PRODUKTY (dodawanie / stock on-off / usuwanie)
+  // ======================================================================
+  document.getElementById("productForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("pName").value.trim();
+    const price = parseFloat(document.getElementById("pPrice").value);
+    const image = document.getElementById("pImage").value.trim();
+    const vintedUrl = document.getElementById("pVintedUrl").value.trim();
+    const description = document.getElementById("pDesc").value.trim();
+    const inStock = document.getElementById("pInStock").checked;
+    if (!name || isNaN(price)) return;
+
+    try {
+      await addDoc(productsCol, {
+        name, price, image, vintedUrl, description, inStock,
+        clicks: 0, createdAt: serverTimestamp()
+      });
+      e.target.reset();
+      document.getElementById("pInStock").checked = true;
+    } catch (err){ console.error(err); alert("Błąd zapisu produktu."); }
+  });
+
+  function renderProductAdminList(){
+    const list = document.getElementById("productAdminList");
+    if (products.length === 0){
+      list.innerHTML = `<p class="text-[var(--paper-dim)] text-xs">Jeszcze nie dodałaś żadnego produktu.</p>`;
+      return;
+    }
+    list.innerHTML = products.map(p => `
+      <div class="flex items-center justify-between bg-[var(--bg-soft)] rounded-lg px-3 py-2.5 gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <img src="${escapeHtml(p.image || 'https://placehold.co/60x60/141d12/c8ff3d?text=?')}" alt=""
+               class="w-10 h-10 rounded object-cover flex-shrink-0" onerror="this.src='https://placehold.co/60x60/141d12/c8ff3d?text=?'">
+          <div class="min-w-0">
+            <p class="truncate font-medium">${escapeHtml(p.name)}</p>
+            <p class="text-xs text-[var(--paper-dim)]">${Number(p.price).toFixed(2)} zł</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+          <label class="flex items-center gap-2 text-xs cursor-pointer">
+            <input type="checkbox" class="switch stock-toggle" data-id="${p.id}" ${p.inStock !== false ? "checked" : ""}>
+          </label>
+          <button data-id="${p.id}" class="delete-product text-[var(--warn)] text-xs hover:underline">Usuń</button>
+        </div>
+      </div>
+    `).join("");
+
+    list.querySelectorAll(".stock-toggle").forEach(cb => {
+      cb.addEventListener("change", () => {
+        updateDoc(doc(productsCol, cb.dataset.id), { inStock: cb.checked }).catch(err => {
+          console.error(err); alert("Błąd zmiany stocku.");
+        });
+      });
+    });
+    list.querySelectorAll(".delete-product").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (confirm("Na pewno usunąć ten produkt?")){
+          deleteDoc(doc(productsCol, btn.dataset.id)).catch(console.error);
+        }
+      });
+    });
+  }
+
+  // Start
+  renderShippingStatus();
+  updateCountdown();
+});
+</script>
+
+</body>
+</html>
